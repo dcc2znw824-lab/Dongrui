@@ -192,6 +192,53 @@
   .fetch-btn:hover { border-color: var(--blue); color: var(--blue); }
   .fetch-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+  /* Symbol selector */
+  .symbol-section { margin-bottom: 4px; }
+  .symbol-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; font-family: var(--font-display); }
+  .symbol-presets { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+  .sym-chip {
+    padding: 5px 12px; border-radius: 20px;
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--muted); font-family: var(--font-display); font-size: 12px;
+    cursor: pointer; transition: all 0.18s;
+  }
+  .sym-chip:hover { border-color: var(--blue); color: var(--blue); }
+  .sym-chip.active { border-color: var(--gold); color: var(--gold); background: rgba(255,209,102,0.1); }
+  .symbol-search-row { display: flex; gap: 8px; }
+  .symbol-input {
+    flex: 1; padding: 9px 13px;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 9px;
+    color: var(--text); font-family: var(--font-display); font-size: 13px;
+    outline: none; text-transform: uppercase; transition: border-color 0.2s;
+  }
+  .symbol-input:focus { border-color: var(--blue); }
+  .symbol-input::placeholder { text-transform: none; color: var(--muted); font-family: var(--font-body); font-size: 12px; }
+  .symbol-go-btn {
+    padding: 9px 16px; border-radius: 9px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--blue);
+    font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .symbol-go-btn:hover { border-color: var(--blue); background: rgba(77,159,255,0.1); }
+
+  /* Today bet items */
+  .tbi {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .tbi:last-child { border-bottom: none; }
+  .tbi-sym { font-family: var(--font-display); font-weight: 700; font-size: 13px; color: var(--text); min-width: 52px; }
+  .tbi-dir { font-weight: 600; min-width: 46px; }
+  .tbi-dir.up { color: var(--green); }
+  .tbi-dir.dn { color: var(--red); }
+  .tbi-amt { color: var(--muted); font-family: var(--font-display); font-size: 12px; }
+  .tbi-result { margin-left: auto; font-family: var(--font-display); font-weight: 700; font-size: 13px; }
+  .tbi-result.win { color: var(--green); }
+  .tbi-result.lose { color: var(--red); }
+  .tbi-result.pending { color: var(--gold); }
+  .tbi-settle { margin-left: 6px; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--gold); font-size: 11px; cursor: pointer; }
+  .tbi-settle:hover { border-color: var(--gold); }
+
   /* Bet card */
   .bet-card {
     background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
@@ -417,45 +464,60 @@
   <!-- Market -->
   <div class="market-card">
     <div class="market-header">
-      <div class="market-title">NDX · 纳斯达克100</div>
-      <div class="market-badge closed" id="market-status">加载中</div>
+      <div class="market-title" id="market-title">选择标的</div>
+      <div class="market-badge closed" id="market-status">未选择</div>
     </div>
-    <div class="market-row">
-      <span class="market-row-label">最近收盘价</span>
-      <span class="market-row-value nu" id="ndx-close">—</span>
+    <div class="symbol-section">
+      <div class="symbol-label">热门标的</div>
+      <div class="symbol-presets">
+        <button class="sym-chip" onclick="selectSymbol('NDX','纳斯达克100')">NDX</button>
+        <button class="sym-chip" onclick="selectSymbol('SPX','标普500')">S&amp;P 500</button>
+        <button class="sym-chip" onclick="selectSymbol('TSLA','特斯拉')">TSLA</button>
+        <button class="sym-chip" onclick="selectSymbol('AAPL','苹果')">AAPL</button>
+        <button class="sym-chip" onclick="selectSymbol('NVDA','英伟达')">NVDA</button>
+        <button class="sym-chip" onclick="selectSymbol('BTC','比特币')">BTC</button>
+        <button class="sym-chip" onclick="selectSymbol('AMZN','亚马逊')">AMZN</button>
+        <button class="sym-chip" onclick="selectSymbol('META','Meta')">META</button>
+      </div>
+      <div class="symbol-search-row">
+        <input class="symbol-input" id="symbol-input" placeholder="输入代码，如 GOOGL、MSFT…" />
+        <button class="symbol-go-btn" onclick="goCustomSymbol()">查询</button>
+      </div>
     </div>
-    <div class="market-row">
-      <span class="market-row-label">前一日收盘</span>
-      <span class="market-row-value nu" id="ndx-prev">—</span>
+    <div id="market-data-section" style="display:none">
+      <div class="market-row">
+        <span class="market-row-label">最近收盘价</span>
+        <span class="market-row-value nu" id="ndx-close">—</span>
+      </div>
+      <div class="market-row">
+        <span class="market-row-label">前一日收盘</span>
+        <span class="market-row-value nu" id="ndx-prev">—</span>
+      </div>
+      <div class="market-row">
+        <span class="market-row-label">涨跌幅</span>
+        <span class="market-row-value nu" id="ndx-change">—</span>
+      </div>
+      <div class="market-row">
+        <span class="market-row-label">数据日期</span>
+        <span class="market-row-value nu" id="ndx-date">—</span>
+      </div>
+      <div id="ai-insight"></div>
+      <button class="fetch-btn" id="fetch-btn" onclick="fetchMarketData()">
+        <span class="spin" id="fetch-spin" style="display:none"></span>
+        <span id="fetch-btn-text">🔄 刷新行情</span>
+      </button>
     </div>
-    <div class="market-row">
-      <span class="market-row-label">涨跌幅</span>
-      <span class="market-row-value nu" id="ndx-change">—</span>
-    </div>
-    <div class="market-row">
-      <span class="market-row-label">数据日期</span>
-      <span class="market-row-value nu" id="ndx-date">—</span>
-    </div>
-    <div id="ai-insight"></div>
-    <button class="fetch-btn" id="fetch-btn" onclick="fetchMarketData()">
-      <span class="spin" id="fetch-spin" style="display:none"></span>
-      <span id="fetch-btn-text">🔄 获取最新行情</span>
-    </button>
   </div>
 
-  <!-- Today bet status (shown after bet) -->
+  <!-- Today bets list -->
   <div class="today-card" id="today-card" style="display:none">
     <div class="tc-label">今日已下注</div>
-    <div class="tc-choice" id="tc-choice"></div>
-    <div class="tc-amount" id="tc-amount"></div>
-    <div class="tc-time"   id="tc-time"></div>
-    <div class="tc-result" id="tc-result"></div>
-    <button class="settle-btn" id="settle-btn" onclick="settleToday()" style="display:none">📊 结算今日竞猜</button>
+    <div id="today-bets-list"></div>
   </div>
 
   <!-- Bet card (hidden after bet) -->
   <div class="bet-card" id="bet-card">
-    <div class="bet-title">下注今日收盘方向</div>
+    <div class="bet-title" id="bet-title">请先选择标的</div>
     <div class="bet-deadline">美股收盘前 <span id="countdown">计算中…</span> 截止</div>
 
     <div class="amount-row">
@@ -513,25 +575,70 @@
 
 <script>
 // ══════════════════════════════════════════════════════
-// STORAGE — per-user data stored under key ndx_u_{username}
+// SUPABASE CONFIG
 // ══════════════════════════════════════════════════════
-const USERS_KEY = 'ndx_users_v1';
+const SUPA_URL = 'https://hbaxxjxhytddmszzqujn.supabase.co';
+const SUPA_KEY = 'sb_publishable_Tlfk4G8IYsY9qFVeX25-vg_dyvd-8iA';
 
-function loadUsers() {
-  try { return JSON.parse(localStorage.getItem(USERS_KEY)) || {}; } catch { return {}; }
+async function sbFetch(path, opts = {}) {
+  const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
+    ...opts,
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer || '',
+      ...(opts.headers || {})
+    }
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
-function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
 
-function loadUserState(username) {
-  const key = 'ndx_u_' + username;
-  try {
-    const s = JSON.parse(localStorage.getItem(key));
-    if (s) return s;
-  } catch {}
-  return { score: 50, maxScore: 50, level: 1, history: [], todayBet: null };
+async function dbGetPlayer(username) {
+  const rows = await sbFetch(`players?username=eq.${encodeURIComponent(username)}&select=*`);
+  return rows && rows.length > 0 ? rows[0] : null;
 }
-function saveUserState(username, state) {
-  localStorage.setItem('ndx_u_' + username, JSON.stringify(state));
+
+async function dbCreatePlayer(username, pin) {
+  return await sbFetch('players', {
+    method: 'POST',
+    prefer: 'return=representation',
+    body: JSON.stringify({
+      username, pin,
+      score: 50, max_score: 50, level: 1,
+      today_bets: {}, history: []
+    })
+  });
+}
+
+async function dbSavePlayer(username, state) {
+  return await sbFetch(`players?username=eq.${encodeURIComponent(username)}`, {
+    method: 'PATCH',
+    prefer: 'return=minimal',
+    body: JSON.stringify({
+      score: state.score,
+      max_score: state.maxScore,
+      level: state.level,
+      today_bets: state.todayBets || {},
+      history: state.history || [],
+      updated_at: new Date().toISOString()
+    })
+  });
+}
+
+function rowToState(row) {
+  return {
+    score:     row.score,
+    maxScore:  row.max_score,
+    level:     row.level,
+    todayBets: row.today_bets || {},
+    history:   row.history || []
+  };
 }
 
 // ══════════════════════════════════════════════════════
@@ -541,14 +648,21 @@ let currentUser = null;
 let state = null;
 let selectedDir = null;
 let marketData = null;
+let currentSymbol = null;
 
-// Check if already logged in (session)
-function initSession() {
+async function saveUserState(username, st) {
+  try { await dbSavePlayer(username, st); } catch(e) { console.error('save failed', e); }
+}
+
+async function initSession() {
   const s = sessionStorage.getItem('ndx_session');
   if (s) {
     currentUser = s;
-    state = loadUserState(currentUser);
-    showGame();
+    try {
+      const row = await dbGetPlayer(currentUser);
+      if (row) { state = rowToState(row); showGame(); return; }
+    } catch(e) {}
+    sessionStorage.removeItem('ndx_session');
   }
 }
 
@@ -566,11 +680,12 @@ function getPin(prefix) {
   return [0,1,2,3].map(i => document.getElementById(prefix+i).value).join('');
 }
 
-function doRegister() {
+async function doRegister() {
   const username = document.getElementById('reg-user').value.trim();
   const pin = getPin('rp');
   const pinConfirm = getPin('rc');
   const msgEl = document.getElementById('reg-msg');
+  const btn = document.querySelector('#form-register .auth-btn');
 
   if (!username || username.length < 2 || username.length > 12) {
     msgEl.className = 'auth-msg err'; msgEl.textContent = '用户名需2~12位字符'; return;
@@ -582,56 +697,67 @@ function doRegister() {
     msgEl.className = 'auth-msg err'; msgEl.textContent = '两次密码不一致'; return;
   }
 
-  const users = loadUsers();
-  if (users[username]) {
-    msgEl.className = 'auth-msg err'; msgEl.textContent = '用户名已存在，请直接登录'; return;
+  btn.disabled = true;
+  msgEl.className = 'auth-msg'; msgEl.textContent = '注册中…';
+
+  try {
+    const existing = await dbGetPlayer(username);
+    if (existing) {
+      msgEl.className = 'auth-msg err'; msgEl.textContent = '用户名已存在，请直接登录';
+      btn.disabled = false; return;
+    }
+    await dbCreatePlayer(username, pin);
+    msgEl.className = 'auth-msg ok'; msgEl.textContent = '注册成功！';
+    setTimeout(async () => {
+      currentUser = username;
+      const row = await dbGetPlayer(username);
+      state = rowToState(row);
+      sessionStorage.setItem('ndx_session', currentUser);
+      showGame();
+    }, 800);
+  } catch(e) {
+    msgEl.className = 'auth-msg err'; msgEl.textContent = '注册失败：' + e.message;
+    btn.disabled = false;
   }
-
-  // Simple hash: store as-is (it's a 4-digit PIN game, not production)
-  users[username] = { pin };
-  saveUsers(users);
-
-  msgEl.className = 'auth-msg ok'; msgEl.textContent = '注册成功！';
-  setTimeout(() => {
-    currentUser = username;
-    state = loadUserState(currentUser);
-    sessionStorage.setItem('ndx_session', currentUser);
-    showGame();
-  }, 800);
 }
 
-function doLogin() {
+async function doLogin() {
   const username = document.getElementById('login-user').value.trim();
   const pin = getPin('lp');
   const msgEl = document.getElementById('login-msg');
+  const btn = document.querySelector('#form-login .auth-btn');
 
   if (!username) { msgEl.className='auth-msg err'; msgEl.textContent='请输入用户名'; return; }
   if (!/^\d{4}$/.test(pin)) { msgEl.className='auth-msg err'; msgEl.textContent='请输入4位数字密码'; return; }
 
-  const users = loadUsers();
-  if (!users[username]) { msgEl.className='auth-msg err'; msgEl.textContent='用户不存在，请先注册'; return; }
-  if (users[username].pin !== pin) { msgEl.className='auth-msg err'; msgEl.textContent='密码错误'; return; }
+  btn.disabled = true;
+  msgEl.className = 'auth-msg'; msgEl.textContent = '登录中…';
 
-  currentUser = username;
-  state = loadUserState(currentUser);
-  sessionStorage.setItem('ndx_session', currentUser);
-  showGame();
+  try {
+    const row = await dbGetPlayer(username);
+    if (!row) { msgEl.className='auth-msg err'; msgEl.textContent='用户不存在，请先注册'; btn.disabled=false; return; }
+    if (row.pin !== pin) { msgEl.className='auth-msg err'; msgEl.textContent='密码错误'; btn.disabled=false; return; }
+    currentUser = username;
+    state = rowToState(row);
+    sessionStorage.setItem('ndx_session', currentUser);
+    showGame();
+  } catch(e) {
+    msgEl.className='auth-msg err'; msgEl.textContent='登录失败，请重试';
+    btn.disabled = false;
+  }
 }
 
 function doLogout() {
   sessionStorage.removeItem('ndx_session');
-  currentUser = null; state = null; selectedDir = null; marketData = null;
+  currentUser = null; state = null; selectedDir = null; marketData = null; currentSymbol = null;
   document.getElementById('screen-game').classList.remove('active');
   document.getElementById('screen-auth').classList.add('active');
-  // clear pin inputs
   ['lp0','lp1','lp2','lp3'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('login-msg').textContent = '';
+  document.querySelector('#form-login .auth-btn').disabled = false;
 }
 
 function showGame() {
-  // Migrate existing accounts missing maxScore/level
-  if (state.maxScore === undefined) state.maxScore = state.score;
-  if (state.level === undefined) state.level = Math.floor(state.maxScore / 100) + 1;
   document.getElementById('screen-auth').classList.remove('active');
   document.getElementById('screen-game').classList.add('active');
   document.getElementById('display-username').textContent = currentUser;
@@ -640,7 +766,6 @@ function showGame() {
   renderHistory();
   updateCountdown();
   updateMaxHint();
-  fetchMarketData();
 }
 
 // ══════════════════════════════════════════════════════
@@ -745,12 +870,14 @@ function updateMaxHint() {
 function renderHistory() {
   const el = document.getElementById('history-list');
   if (!state.history.length) { el.innerHTML='<div class="history-empty">暂无记录</div>'; return; }
-  el.innerHTML = [...state.history].reverse().slice(0,15).map(h => {
+  el.innerHTML = [...state.history].reverse().slice(0,20).map(h => {
     const rc = h.result==='win'?'win':h.result==='lose'?'lose':'pending';
     const gain = h.result==='win' ? `+${h.amount}` : h.result==='lose' ? `-${h.amount}` : '待结算';
+    const sym = h.sym || 'NDX';
     return `<div class="history-item">
       <span class="hi-date">${h.date}</span>
-      <span class="hi-choice ${h.choice==='up'?'up':'dn'}">${h.choice==='up'?'📈涨':'📉跌'}</span>
+      <span class="hi-choice ${h.choice==='up'?'up':'dn'}" style="min-width:36px">${h.choice==='up'?'📈':'📉'}</span>
+      <span class="hi-amount" style="flex:1;color:var(--text);font-weight:600">${sym}</span>
       <span class="hi-amount">${h.amount}分</span>
       <span class="hi-result ${rc}">${gain}</span>
     </div>`;
@@ -760,33 +887,55 @@ function renderHistory() {
 function renderTodayBet() {
   const today = getTodayNY();
   const tc = document.getElementById('today-card');
-  const bc = document.getElementById('bet-card');
+  const list = document.getElementById('today-bets-list');
 
-  if (state.todayBet && state.todayBet.date === today) {
-    const bet = state.todayBet;
-    tc.style.display = 'block'; bc.style.display = 'none';
+  // Collect today's bets across all symbols
+  const todayBets = Object.entries(state.todayBets || {})
+    .map(([sym, bet]) => ({sym, ...bet}))
+    .filter(b => b.date === today);
 
-    const ce = document.getElementById('tc-choice');
-    ce.textContent = bet.choice==='up'?'📈 看涨':'📉 看跌';
-    ce.className = 'tc-choice '+(bet.choice==='up'?'up':'dn');
-    document.getElementById('tc-amount').innerHTML = `下注积分 <span>${bet.amount}</span>`;
-    document.getElementById('tc-time').textContent = '下注时间 '+bet.time;
-
-    const re = document.getElementById('tc-result');
-    const sb = document.getElementById('settle-btn');
-    if (bet.result === 'pending') {
-      re.textContent='⏳ 等待收盘结算'; re.className='tc-result pending';
-      const w = isWithinBettingWindow();
-      sb.style.display = (!w.allowed && w.reason.includes('收盘')) ? 'block' : 'none';
-    } else if (bet.result === 'win') {
-      re.textContent=`🎉 猜对了！获得 +${bet.amount} 积分`; re.className='tc-result win';
-      sb.style.display='none';
-    } else {
-      re.textContent=`😅 猜错了，损失 ${bet.amount} 积分`; re.className='tc-result lose';
-      sb.style.display='none';
-    }
+  if (todayBets.length > 0) {
+    tc.style.display = 'block';
+    const w = isWithinBettingWindow();
+    const canSettle = !w.allowed && w.reason.includes('收盘');
+    list.innerHTML = todayBets.map(b => {
+      const dirClass = b.choice === 'up' ? 'up' : 'dn';
+      const dirText  = b.choice === 'up' ? '📈 看涨' : '📉 看跌';
+      let resHtml = '';
+      if (b.result === 'pending') {
+        resHtml = `<span class="tbi-result pending">待结算</span>`;
+        if (canSettle) resHtml += `<button class="tbi-settle" onclick="settleSymbol('${b.sym}','${b.name}')">结算</button>`;
+      } else if (b.result === 'win') {
+        resHtml = `<span class="tbi-result win">+${b.amount}</span>`;
+      } else {
+        resHtml = `<span class="tbi-result lose">-${b.amount}</span>`;
+      }
+      return `<div class="tbi">
+        <span class="tbi-sym">${b.sym}</span>
+        <span class="tbi-dir ${dirClass}">${dirText}</span>
+        <span class="tbi-amt">${b.amount}分</span>
+        ${resHtml}
+      </div>`;
+    }).join('');
   } else {
-    tc.style.display='none'; bc.style.display='block';
+    tc.style.display = 'none';
+  }
+
+  // Bet card: show/hide based on whether current symbol already bet today
+  const bc = document.getElementById('bet-card');
+  const betTitle = document.getElementById('bet-title');
+  if (!currentSymbol) {
+    bc.style.display = 'block';
+    betTitle.textContent = '请先选择标的';
+    document.getElementById('btn-up').disabled = true;
+    document.getElementById('btn-dn').disabled = true;
+    document.getElementById('confirm-btn').disabled = true;
+    return;
+  }
+  const alreadyBet = state.todayBets?.[currentSymbol.code]?.date === today;
+  bc.style.display = alreadyBet ? 'none' : 'block';
+  if (!alreadyBet) {
+    betTitle.textContent = `下注 ${currentSymbol.code} · ${currentSymbol.name} 今日方向`;
     const w = isWithinBettingWindow();
     document.getElementById('btn-up').disabled = !w.allowed;
     document.getElementById('btn-dn').disabled = !w.allowed;
@@ -824,8 +973,9 @@ function openConfirmModal() {
   const amt = parseInt(document.getElementById('bet-amount').value);
   if (!selectedDir || !(amt >= 1 && amt <= state.score)) return;
   const dirText = selectedDir==='up'?'📈 看涨':'📉 看跌';
+  const symText = currentSymbol ? `<b>${currentSymbol.code}</b> · ${currentSymbol.name}<br>` : '';
   document.getElementById('modal-desc').innerHTML =
-    `方向：<b>${dirText}</b><br>下注：<b style="color:var(--gold)">${amt} 积分</b><br><br>猜对翻倍得 <b style="color:var(--green)">+${amt}</b>，猜错损失 <b style="color:var(--red)">-${amt}</b>`;
+    `${symText}方向：<b>${dirText}</b><br>下注：<b style="color:var(--gold)">${amt} 积分</b><br><br>猜对翻倍得 <b style="color:var(--green)">+${amt}</b>，猜错损失 <b style="color:var(--red)">-${amt}</b>`;
   document.getElementById('confirm-modal').classList.add('show');
 }
 
@@ -843,9 +993,10 @@ function confirmBet() {
   const today = getTodayNY();
   const timeStr = new Date().toLocaleTimeString('zh-CN',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit'});
 
-  state.todayBet = { date: today, choice: selectedDir, amount: amt, time: timeStr, result: 'pending' };
-  state.history = state.history.filter(h => h.date !== today);
-  state.history.push({ date: today, choice: selectedDir, amount: amt, result: 'pending' });
+  if (!currentSymbol) { alert('请先选择一个标的'); return; }
+  if (!state.todayBets) state.todayBets = {};
+  state.todayBets[currentSymbol.code] = { date: today, name: currentSymbol.name, choice: selectedDir, amount: amt, time: timeStr, result: 'pending' };
+  state.history.push({ date: today, sym: currentSymbol.code, name: currentSymbol.name, choice: selectedDir, amount: amt, result: 'pending' });
   saveUserState(currentUser, state);
   selectedDir = null;
   renderTodayBet(); renderHistory();
@@ -854,13 +1005,21 @@ function confirmBet() {
 // ══════════════════════════════════════════════════════
 // SETTLEMENT
 // ══════════════════════════════════════════════════════
-async function settleToday() {
-  const btn = document.getElementById('settle-btn');
-  btn.disabled = true; btn.textContent = '结算中…';
-  await fetchMarketData(true);
-  if (!marketData) { btn.disabled=false; btn.textContent='📊 结算今日竞猜'; alert('数据获取失败，请稍后重试'); return; }
+async function settleSymbol(symCode, symName) {
+  const today = getTodayNY();
+  const bet = state.todayBets?.[symCode];
+  if (!bet || bet.result !== 'pending') return;
 
-  const bet = state.todayBet;
+  // Temporarily set current symbol so fetchMarketData fetches the right one
+  const prevSym = currentSymbol;
+  currentSymbol = { code: symCode, name: symName };
+
+  renderTodayBet(); // refresh UI to show loading state
+  await fetchMarketData(true);
+  currentSymbol = prevSym;
+
+  if (!marketData) { alert('数据获取失败，请稍后重试'); return; }
+
   const actualDir = marketData.change >= 0 ? 'up' : 'down';
   const won = bet.choice === actualDir;
   const delta = won ? bet.amount : -bet.amount;
@@ -868,14 +1027,14 @@ async function settleToday() {
   state.score += delta;
   state.score = Math.max(0, state.score);
   bet.result = won ? 'win' : 'lose';
-  const hi = state.history.find(h => h.date === bet.date);
+
+  // Update history entry
+  const hi = [...state.history].reverse().find(h => h.date === today && h.sym === symCode);
   if (hi) hi.result = bet.result;
 
-  // Level tracking — level only goes up based on maxScore
+  // Level tracking
   const oldLevel = state.level || 1;
-  if (state.score > (state.maxScore || 0)) {
-    state.maxScore = state.score;
-  }
+  if (state.score > (state.maxScore || 0)) state.maxScore = state.score;
   state.level = Math.floor((state.maxScore || state.score) / 100) + 1;
   const leveledUp = state.level > oldLevel;
 
@@ -903,10 +1062,10 @@ async function fetchMarketData(silent = false) {
         model: "claude-sonnet-4-20250514",
         max_tokens: 1000,
         tools: [{ type: "web_search_20250305", name: "web_search" }],
-        system: `You are a financial data assistant. Search for the LATEST Nasdaq 100 (NDX) index data.
+        system: `You are a financial data assistant. The user will tell you a ticker symbol or asset name. Search for its LATEST closing price data.
 Return ONLY a valid JSON object with no markdown, no backticks, no preamble:
 {"date":"YYYY-MM-DD","close":20000.00,"prev_close":19900.00,"change":100.00,"change_pct":0.50,"summary":"中文20字内简述今日走势原因"}`,
-        messages: [{ role: "user", content: "Get latest Nasdaq 100 NDX closing price. Return JSON only." }]
+        messages: [{ role: "user", content: `Get latest closing price for ${currentSymbol ? currentSymbol.code + ' (' + currentSymbol.name + ')' : 'Nasdaq 100 NDX'}. Return JSON only.` }]
       })
     });
     const data = await res.json();
@@ -933,12 +1092,42 @@ Return ONLY a valid JSON object with no markdown, no backticks, no preamble:
 
     if (p.summary) document.getElementById('ai-insight').textContent = '💡 '+p.summary;
 
+    // Show data section and title
+    document.getElementById('market-data-section').style.display = 'block';
+    if (currentSymbol) document.getElementById('market-title').textContent = currentSymbol.code + ' · ' + currentSymbol.name;
+
   } catch(e) {
     console.error(e);
     if (!silent) document.getElementById('ai-insight').textContent = '⚠️ 数据获取失败，请稍后重试';
   } finally {
     if (!silent) { btn.disabled=false; spin.style.display='none'; txt.textContent='🔄 刷新行情'; }
   }
+}
+
+// ══════════════════════════════════════════════════════
+// SYMBOL SELECTION
+// ══════════════════════════════════════════════════════
+function selectSymbol(code, name) {
+  currentSymbol = { code, name };
+  // Highlight active chip
+  document.querySelectorAll('.sym-chip').forEach(c => {
+    c.classList.toggle('active', c.textContent.trim() === code || c.textContent.replace('&','&').trim() === 'S&P 500' && code === 'SPX');
+  });
+  document.getElementById('market-title').textContent = code + ' · ' + name;
+  document.getElementById('market-data-section').style.display = 'none';
+  document.getElementById('ai-insight').textContent = '';
+  document.getElementById('fetch-btn').style.display = 'flex';
+  renderTodayBet();
+  fetchMarketData();
+}
+
+function goCustomSymbol() {
+  const raw = document.getElementById('symbol-input').value.trim().toUpperCase();
+  if (!raw) return;
+  document.getElementById('symbol-input').value = '';
+  // Clear preset chip highlights
+  document.querySelectorAll('.sym-chip').forEach(c => c.classList.remove('active'));
+  selectSymbol(raw, raw);
 }
 
 // ══════════════════════════════════════════════════════
@@ -966,6 +1155,8 @@ document.getElementById('bet-amount').addEventListener('input', checkConfirmBtn)
 
 // Enter key on login
 document.getElementById('login-user').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+// Enter key on symbol search
+document.getElementById('symbol-input').addEventListener('keydown', e => { if(e.key==='Enter') goCustomSymbol(); });
 
 setInterval(updateCountdown, 30000);
 setInterval(() => { if(state) renderTodayBet(); }, 60000);
